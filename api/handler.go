@@ -15,8 +15,6 @@ type Handler struct {
 }
 
 func (hdl *Handler) FindByID(w http.ResponseWriter, r *http.Request) {
-	log.Println("Hit on GET method")
-
 	requestID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -37,7 +35,6 @@ func (hdl *Handler) FindByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hdl *Handler) InsertData(w http.ResponseWriter, r *http.Request) {
-	log.Println("Hit on POST method")
 	body, _ := io.ReadAll(r.Body)
 
 	if len(body) == 0 {
@@ -55,8 +52,6 @@ func (hdl *Handler) InsertData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hdl *Handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	log.Println("Hit on Delete method")
-
 	requestID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -74,8 +69,6 @@ func (hdl *Handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hdl *Handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
-	log.Println("Hit on update method")
-
 	// Get ID
 	requestID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
