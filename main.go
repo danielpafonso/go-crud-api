@@ -19,7 +19,6 @@ func handlerGeneral(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Add flags
 	//    port
-	router := http.NewServeMux()
 
 	apiHandler := api.Handler{
 		Data: api.LoadMapData(),
@@ -27,25 +26,38 @@ func main() {
 	apiHandler.NextID = len(apiHandler.Data) + 1
 
 	// generic handler
-	router.HandleFunc("/", handlerGeneral)
-	router.HandleFunc("GET /data/{id}", apiHandler.FindByID)
-	router.HandleFunc("POST /data", apiHandler.InsertData)
-	router.HandleFunc("DELETE /data/{id}", apiHandler.DeleteByID)
-	router.HandleFunc("PUT /data/{id}", apiHandler.UpdateByID)
-
-	router.HandleFunc("/coffee", func(w http.ResponseWriter, r *http.Request) {
+	rootRouter := http.NewServeMux()
+	rootRouter.HandleFunc("/", handlerGeneral)
+	rootRouter.HandleFunc("/coffee", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 		w.Write([]byte(http.StatusText(http.StatusTeapot)))
 	})
-
 	// debug
-	router.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
+	rootRouter.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(apiHandler.Data)
 	})
 
+	// api router
+	apiRouter := http.NewServeMux()
+	apiRouter.HandleFunc("GET /{id}", apiHandler.FindByID)
+
+	// api admin router
+	apiAdmin := http.NewServeMux()
+	apiAdmin.HandleFunc("POST /", apiHandler.InsertData)
+	apiAdmin.HandleFunc("DELETE /{id}", apiHandler.DeleteByID)
+	apiAdmin.HandleFunc("PUT /{id}", apiHandler.UpdateByID)
+
+	// add auth middleware to api, sending all non defined routes to auth
+	apiRouter.Handle("/", middleware.Auth(apiAdmin))
+
+	// add sub routing for Api to root routing
+	rootRouter.Handle("/data/", http.StripPrefix("/data", apiRouter))
+
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: middleware.Logging(router),
+		Addr: ":8080",
+		// middleware channing
+		Handler: middleware.Logging(rootRouter),
+		// Handler: middleware.Logging(middleware.Auth(router)),
 	}
 	log.Println("Server listing in port :8080")
 	server.ListenAndServe()
