@@ -2,10 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
-
-	// "flag"
 
 	"go-crud-api/api"
 	"go-crud-api/api/middleware"
@@ -17,8 +16,10 @@ func handlerGeneral(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Add flags
-	//    port
+	var serverPort string
+
+	flag.StringVar(&serverPort, "p", "8080", "Port which the server will use")
+	flag.Parse()
 
 	apiHandler := api.Handler{
 		Data: api.LoadMapData(),
@@ -54,7 +55,7 @@ func main() {
 	rootRouter.Handle("/data/", http.StripPrefix("/data", apiRouter))
 
 	server := http.Server{
-		Addr: ":8080",
+		Addr: ":" + serverPort,
 		// middleware channing
 		Handler: middleware.Logging(rootRouter),
 		// Handler: middleware.Logging(middleware.Auth(router)),
