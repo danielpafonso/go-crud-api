@@ -6,7 +6,7 @@ import (
 
 type DataBaseRepo interface {
 	Connect() error
-	CheckDatabase() error
+	CheckDatabase(initScript string) error
 
 	GetDatabyID(id int) (*models.Data, error)
 	InsertData(data models.Data) (int, error)

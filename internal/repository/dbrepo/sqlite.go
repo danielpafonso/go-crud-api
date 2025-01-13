@@ -31,7 +31,7 @@ func (db *Sqlite3DB) Connect() error {
 	return nil
 }
 
-func (db *Sqlite3DB) CheckDatabase() error {
+func (db *Sqlite3DB) CheckDatabase(initScript string) error {
 	query := "SELECT name from sqlite_master WHERE type='table' and name='data';"
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -40,18 +40,10 @@ func (db *Sqlite3DB) CheckDatabase() error {
 	var table string
 	row.Scan(&table)
 	if table == "" {
-		// read file
-		data, err := os.ReadFile("init-script.sql")
-		if err != nil {
-			return err
-		}
 		// create table
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
-		db.DB.ExecContext(ctx, string(data))
-		if err != nil {
-			return err
-		}
+		db.DB.ExecContext(ctx, initScript)
 	}
 	return nil
 }

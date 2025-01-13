@@ -6,11 +6,16 @@ import (
 	"log"
 	"net/http"
 
+	_ "embed"
+
 	"go-crud-api/api"
 	"go-crud-api/api/middleware"
 	"go-crud-api/internal/repository"
 	"go-crud-api/internal/repository/dbrepo"
 )
+
+//go:embed init-script.sql
+var InitScript string
 
 func handlerGeneral(w http.ResponseWriter, r *http.Request) {
 	log.Println("General response")
@@ -29,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
-	err = repo.CheckDatabase()
+	err = repo.CheckDatabase(InitScript)
 	if err != nil {
 		log.Panicln(err)
 	}
