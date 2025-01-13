@@ -8,6 +8,8 @@ import (
 
 	"go-crud-api/api"
 	"go-crud-api/api/middleware"
+	"go-crud-api/internal/repository"
+	"go-crud-api/internal/repository/dbrepo"
 )
 
 func handlerGeneral(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +18,25 @@ func handlerGeneral(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	var repo repository.DataBaseRepo
+
+	dbConn := &dbrepo.Sqlite3DB{
+		ConnectionString: "data.sqlite",
+	}
+	repo = dbConn
+	err := repo.Connect()
+	if err != nil {
+		log.Panicln(err)
+	}
+	err = repo.CheckDatabase()
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer dbConn.DB.Close()
+
+	repo.GetDatabyID(2)
+
 	var serverPort string
 
 	flag.StringVar(&serverPort, "p", "8080", "Port which the server will use")
