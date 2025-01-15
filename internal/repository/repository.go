@@ -9,7 +9,7 @@ type DataBaseRepo interface {
 	CheckDatabase(initScript string) error
 
 	GetDatabyID(id int) (*models.Data, error)
-	InsertData(data models.Data) (int, error)
+	InsertData(data models.Data) int
 	DeleteDatabyID(id int) error
 	UpdateData(data models.Data) error
 }

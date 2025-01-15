@@ -10,6 +10,7 @@ import (
 
 	"go-crud-api/api"
 	"go-crud-api/api/middleware"
+	"go-crud-api/internal/models"
 	"go-crud-api/internal/repository"
 	"go-crud-api/internal/repository/dbrepo"
 )
@@ -40,7 +41,15 @@ func main() {
 	}
 	defer dbConn.DB.Close()
 
-	repo.GetDatabyID(2)
+	data, _ := repo.GetDatabyID(2)
+	log.Println(data)
+
+	insertedID := repo.InsertData(models.Data{Value: "new data"})
+	log.Println("inserted", insertedID)
+	_, err = repo.GetDatabyID(5)
+	if err != nil {
+		log.Println("no data with that ID")
+	}
 
 	var serverPort string
 

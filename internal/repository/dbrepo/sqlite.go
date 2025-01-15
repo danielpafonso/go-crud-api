@@ -55,16 +55,27 @@ func (db *Sqlite3DB) GetDatabyID(id int) (*models.Data, error) {
 	row := db.DB.QueryRowContext(ctx, query, id)
 
 	var data models.Data
-	row.Scan(&data.ID, &data.Value)
+	err := row.Scan(&data.ID, &data.Value)
+	if err != nil {
+		return nil, err
+	}
 
-	log.Println(data)
-
-	return nil, nil
+	return &data, nil
 }
 
-func (db *Sqlite3DB) InsertData(data models.Data) (int, error) {
-	_ = data
-	return 0, nil
+func (db *Sqlite3DB) InsertData(data models.Data) int {
+	query := "INSERT INTO data (value) values(?);"
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	result, err := db.DB.ExecContext(ctx, query, data.Value)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	lastID, _ := result.LastInsertId()
+
+	return int(lastID)
 }
 
 func (db *Sqlite3DB) DeleteDatabyID(id int) error {
