@@ -51,6 +51,18 @@ func main() {
 		log.Println("no data with that ID")
 	}
 
+	repo.DeleteDatabyID(1)
+	repo.DeleteDatabyID(10)
+
+	rows, err := repo.UpdateData(models.Data{
+		ID:    2,
+		Value: "Update",
+	})
+	if err != nil {
+		log.Panicln(err)
+	}
+	log.Println("update:", rows)
+
 	var serverPort string
 
 	flag.StringVar(&serverPort, "p", "8080", "Port which the server will use")

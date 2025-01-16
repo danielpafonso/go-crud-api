@@ -78,12 +78,28 @@ func (db *Sqlite3DB) InsertData(data models.Data) int {
 	return int(lastID)
 }
 
-func (db *Sqlite3DB) DeleteDatabyID(id int) error {
-	_ = id
-	return nil
+func (db *Sqlite3DB) DeleteDatabyID(id int) (int, error) {
+	query := "DELETE FROM data WHERE id=?;"
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	result, err := db.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return 0, err
+	}
+	affected, _ := result.RowsAffected()
+	return int(affected), nil
 }
 
-func (db *Sqlite3DB) UpdateData(data models.Data) error {
-	_ = data
-	return nil
+func (db *Sqlite3DB) UpdateData(data models.Data) (int, error) {
+	query := "UPDATE data SET value=? WHERE id=?;"
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	result, err := db.DB.ExecContext(ctx, query, data.Value, data.ID)
+	if err != nil {
+		return 0, err
+	}
+	affected, _ := result.RowsAffected()
+	return int(affected), nil
 }

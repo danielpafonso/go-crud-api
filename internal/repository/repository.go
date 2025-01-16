@@ -10,6 +10,6 @@ type DataBaseRepo interface {
 
 	GetDatabyID(id int) (*models.Data, error)
 	InsertData(data models.Data) int
-	DeleteDatabyID(id int) error
-	UpdateData(data models.Data) error
+	DeleteDatabyID(id int) (int, error)
+	UpdateData(data models.Data) (int, error)
 }
