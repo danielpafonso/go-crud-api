@@ -31,6 +31,10 @@ func (db *Sqlite3DB) Connect() error {
 	return nil
 }
 
+func (db *Sqlite3DB) Close() {
+	db.DB.Close()
+}
+
 func (db *Sqlite3DB) CheckDatabase(initScript string) error {
 	query := "SELECT name from sqlite_master WHERE type='table' and name='data';"
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

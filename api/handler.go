@@ -6,11 +6,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"go-crud-api/internal/models"
+	"go-crud-api/internal/repository"
 )
 
 // handlers code
 type Handler struct {
-	Data   map[int]Data
+	DB     repository.DataBaseRepo
 	NextID int
 }
 
@@ -21,9 +24,8 @@ func (hdl *Handler) FindByID(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 
-	data, ok := hdl.Data[requestID]
-
-	if !ok {
+	data, err := hdl.DB.GetDatabyID(requestID)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Data not found"))
 		return
@@ -43,12 +45,11 @@ func (hdl *Handler) InsertData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hdl.Data[hdl.NextID] = Data{
+	insertedID := hdl.DB.InsertData(models.Data{
 		ID:    hdl.NextID,
 		Value: string(body),
-	}
-	log.Println("Written data", hdl.Data[hdl.NextID])
-	hdl.NextID += 1
+	})
+	log.Println("Written data", insertedID)
 }
 
 func (hdl *Handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
@@ -58,14 +59,14 @@ func (hdl *Handler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 
-	if _, ok := hdl.Data[requestID]; !ok {
+	numRemoveds, err := hdl.DB.DeleteDatabyID(requestID)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(http.StatusText(http.StatusNotFound)))
 		return
 	}
-	// delete map entry
-	delete(hdl.Data, requestID)
 	log.Println("Delete entry with id:", requestID)
+	log.Println("Affected number of rows:", numRemoveds)
 }
 
 func (hdl *Handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
@@ -83,19 +84,25 @@ func (hdl *Handler) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if data exists
-	data, ok := hdl.Data[requestID]
+	// get Body data
+	body, _ := io.ReadAll(r.Body)
 
-	if !ok {
+	data := models.Data{
+		ID:    requestID,
+		Value: string(body),
+	}
+
+	// execute query
+	affectedRows, err := hdl.DB.UpdateData(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return
+	}
+	if affectedRows == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Data not found"))
 		return
 	}
-
-	// get Body data
-	body, _ := io.ReadAll(r.Body)
-	// change data
-	data.Value = string(body)
-	hdl.Data[requestID] = data
 	log.Println("Updated data:", data)
 }

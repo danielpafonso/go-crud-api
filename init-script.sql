@@ -10,3 +10,6 @@ INSERT INTO data("value")
 
 INSERT INTO data("value")
 	VALUES("Lorem ipsum dolor sit amet");
+
+INSERT INTO data("value")
+	VALUES("Programing is fun");

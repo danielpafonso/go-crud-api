@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 
 	"go-crud-api/api"
 	"go-crud-api/api/middleware"
-	"go-crud-api/internal/models"
 	"go-crud-api/internal/repository"
 	"go-crud-api/internal/repository/dbrepo"
 )
@@ -24,13 +22,18 @@ func handlerGeneral(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
+	var serverPort string
+	var dbPath string
 	var repo repository.DataBaseRepo
 
-	dbConn := &dbrepo.Sqlite3DB{
-		ConnectionString: "data.sqlite",
+	flag.StringVar(&serverPort, "p", "8080", "Port which the server will use")
+	flag.StringVar(&dbPath, "s", "data.sqlite", "Path to the Database file")
+	flag.Parse()
+
+	// prep database
+	repo = &dbrepo.Sqlite3DB{
+		ConnectionString: dbPath,
 	}
-	repo = dbConn
 	err := repo.Connect()
 	if err != nil {
 		log.Panicln(err)
@@ -39,39 +42,11 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
-	defer dbConn.DB.Close()
-
-	data, _ := repo.GetDatabyID(2)
-	log.Println(data)
-
-	insertedID := repo.InsertData(models.Data{Value: "new data"})
-	log.Println("inserted", insertedID)
-	_, err = repo.GetDatabyID(5)
-	if err != nil {
-		log.Println("no data with that ID")
-	}
-
-	repo.DeleteDatabyID(1)
-	repo.DeleteDatabyID(10)
-
-	rows, err := repo.UpdateData(models.Data{
-		ID:    2,
-		Value: "Update",
-	})
-	if err != nil {
-		log.Panicln(err)
-	}
-	log.Println("update:", rows)
-
-	var serverPort string
-
-	flag.StringVar(&serverPort, "p", "8080", "Port which the server will use")
-	flag.Parse()
+	defer repo.Close()
 
 	apiHandler := api.Handler{
-		Data: api.LoadMapData(),
+		DB: repo,
 	}
-	apiHandler.NextID = len(apiHandler.Data) + 1
 
 	// generic handler
 	rootRouter := http.NewServeMux()
@@ -79,10 +54,6 @@ func main() {
 	rootRouter.HandleFunc("/coffee", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 		w.Write([]byte(http.StatusText(http.StatusTeapot)))
-	})
-	// debug
-	rootRouter.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(apiHandler.Data)
 	})
 
 	// api router
@@ -107,6 +78,6 @@ func main() {
 		Handler: middleware.Logging(rootRouter),
 		// Handler: middleware.Logging(middleware.Auth(router)),
 	}
-	log.Println("Server listing in port :8080")
+	log.Println("Server listing in port :" + serverPort)
 	server.ListenAndServe()
 }
